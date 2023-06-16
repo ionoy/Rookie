@@ -1,23 +1,41 @@
 class CoreNavigation {
     [hashtable] $coreState
-    [string]$name = "Core Navigation"
-    [string]$filter = ""
-    [string]$lastFilter = ""
-    [string]$lastPath = ""
-    [array]$itemsCache = @()
-    [array]$itemsToShow = @()
-    [int]$selectedIndex = 0
-    [string]$selectedName = ""
+    [string] $name = "Core Navigation"
+    [string] $filter = ""
+    [string] $lastFilter = ""
+    [string] $lastPath = ""
+    [array] $itemsCache = @()
+    [array] $itemsToShow = @()
+    [int] $selectedIndex = 0
+    [string] $selectedName = ""
     [System.Management.Automation.Host.PSHost] $hostContext
+    [scriptblock] $pathLister = {
+        param ([string]$path)
+        
+        $items = Get-ChildItem $path
+        $rootItem = Get-Item -LiteralPath $path
+        
+        if ($rootItem.FullName -ne $rootItem.Root.FullName) {
+            $parent = New-Object PSObject -Property @{
+                Name = ".."
+                FullName = (Get-Item -LiteralPath (Join-Path $path "..")).FullName
+                PSIsContainer = $true
+            }
+            $items = @($parent) + $items
+        }
+
+        return $items
+    }
     
     CoreNavigation ([hashtable] $coreState, [System.Management.Automation.Host.PSHost] $hostContext) {
         $this.coreState = $coreState
-        $this.coreState["CoreNavigation"] = $this
+        $this.coreState.plugins["CoreNavigation"] = $this
         $this.hostContext = $hostContext
-        $this.coreState.focus = $this.name
+        $this.coreState.focus = $this.name        
+        $this.coreState.pathLister = $this.pathLister
     }
 
-    [void] Tick() {        
+    [void] Tick() {
         $this.ReceiveKeyboardInput()
         $this.ShowDirectoryContent($false)
     }
@@ -25,27 +43,18 @@ class CoreNavigation {
     [void] UpdateCurrentDirectory([bool] $forceUpdate = $false) {
         $path = $this.coreState.currentDir.Path
 
-        if ($path -ne $this.lastPath -or $forceUpdate) {            
-            $this.itemsCache = Get-ChildItem $path
-
-            $rootItem = Get-Item -LiteralPath $path
-            if ($rootItem.FullName -ne $rootItem.Root.FullName) {
-                $parent = New-Object PSObject -Property @{
-                    Name = ".."
-                    FullName = (Get-Item -LiteralPath (Join-Path $path "..")).FullName
-                    PSIsContainer = $true
-                }
-                $this.itemsCache = @($parent) + $this.itemsCache
-            }
-
+        if ($path -ne $this.lastPath -or $forceUpdate) {
+            Log $this.coreState.pathLister
+            $this.itemsCache = & $this.coreState.pathLister $path $this.coreState
             $this.itemsToShow = $this.itemsCache
             $this.lastPath = $path
+            
+            Log $this.itemsCache.Count
         }
     }
 
     [void] UpdateFilteredDirectory() {
         if ($this.filter -ne $this.lastFilter) {
-            Log "UpdateFilteredDirectory"
             if ($this.filter) {
                 $this.itemsToShow = $this.itemsCache.Where({ $_.Name -like ("*"+$this.filter+"*") })
             } else {

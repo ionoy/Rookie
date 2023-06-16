@@ -7,7 +7,7 @@ class CoreCommand {
 
     CoreCommand ([hashtable] $coreState, [System.Management.Automation.Host.PSHost] $hostContext) {
         $this.coreState = $coreState
-        $this.coreState["CoreCommand"] = $this
+        $this.coreState.plugins["CoreCommand"] = $this
         $this.hostContext = $hostContext
 
         $commandFiles = Get-ChildItem -Path . -Filter "_*.ps1" -Recurse
@@ -97,11 +97,11 @@ class CoreCommand {
             {
                 &$cmd.scriptblock $this
 
-                $this.coreState.CoreNavigation.ShowDirectoryContent($true)
+                $this.coreState.plugins.CoreNavigation.ShowDirectoryContent($true)
             }
             else
             {
-                $this.coreState.CoreStatus.text = "Command not found: $($command)"
+                $this.coreState.plugins.CoreStatus.text = "Command not found: $($command)"
             }
         }
         catch

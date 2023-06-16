@@ -4,20 +4,8 @@ $coreState = @{
     renderQueue = @{}
     selectedPaths = @()
     needUIRefresh = $false
-    focus = "core"
-}
-
-function Add-RookiePlugin {
-    param (
-        [Parameter(Mandatory=$true)] [string] $name,
-        [Parameter(Mandatory=$true)] [int] $renderPriority,
-        [Parameter(Mandatory=$true)] [scriptblock] $mainLoop
-    )
-
-    $coreState.plugins[$name] = $mainLoop
-    $coreState.renderQueue[$renderPriority] = $mainLoop
-
-    Log "Added plugin $name with render priority $renderPriority"
+    focus = "core" 
+    pathLister = {}
 }
 
 function Start-Rookie {
@@ -34,6 +22,7 @@ function Start-Rookie {
         $coreState.renderQueue[100] = [CoreNavigation]::new($coreState, $host)
         $coreState.renderQueue[200] = [CoreCommand]::new($coreState, $host)
         $coreState.renderQueue[300] = [CoreStatus]::new($coreState, $host)
+        $coreState.renderQueue[400] = [CoreQuickNav]::new($coreState, $host)
     
         $coreState.focus = "Core Navigation"
 
@@ -49,7 +38,7 @@ function Start-Rookie {
             $coreState.key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
             if (($coreState.key.Modifiers -band [System.ConsoleModifiers]::Control) -eq [System.ConsoleModifiers]::Control) {
-                switch ($key.VirtualKeyCode) {                                         
+                switch ($key.VirtualKeyCode) {
                     67 { # c 
                         exit
                     }

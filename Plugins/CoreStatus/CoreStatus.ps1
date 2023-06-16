@@ -5,7 +5,7 @@
 
     CoreStatus([hashtable] $coreState, [System.Management.Automation.Host.PSHost] $hostContext) {
         $this.coreState = $coreState
-        $this.coreState["CoreStatus"] = $this
+        $this.coreState.plugins["CoreStatus"] = $this
         $this.hostContext = $hostContext
     }
 
