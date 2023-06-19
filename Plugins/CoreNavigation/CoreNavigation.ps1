@@ -8,6 +8,8 @@ class CoreNavigation {
     [array] $itemsToShow = @()
     [int] $selectedIndex = 0
     [string] $selectedName = ""
+    [boolean] $upNavigationEnabled = $true
+    
     [System.Management.Automation.Host.PSHost] $hostContext
     [scriptblock] $pathLister = {
         param ([string]$path)
@@ -124,7 +126,8 @@ class CoreNavigation {
 
             switch ($this.coreState.key.VirtualKeyCode) {
                 38 { # up
-                    if ($this.selectedIndex -gt 0) {
+                    if ($this.selectedIndex -gt 0)
+                    {
                         $this.selectedIndex--
                         $this.ReplaceSelectedPaths()
                     }
@@ -152,9 +155,12 @@ class CoreNavigation {
                     if ($this.filter) {
                         $this.filter = $this.filter.Substring(0, $this.filter.Length - 1)
                     } else {
-                        Set-Location ..
-                        $this.coreState.currentDir = Get-Location
-                        $this.selectedIndex = 0
+                        if ($this.upNavigationEnabled)
+                        {
+                            Set-Location ..
+                            $this.coreState.currentDir = Get-Location
+                            $this.selectedIndex = 0
+                        }
                     }
                 }
                 33 { # page up

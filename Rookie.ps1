@@ -44,12 +44,12 @@ function Start-Rookie {
                     }
                 }
             } else {
-                switch ($coreState.key.VirtualKeyCode) {
+                #switch ($coreState.key.VirtualKeyCode) {
                     # escape
-                    27 { 
-                        exit
-                    }
-                }
+                    # 27 { 
+                    #    exit
+                    # }
+                #}
             }
         }
     }

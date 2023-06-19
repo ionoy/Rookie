@@ -39,6 +39,13 @@ class CoreQuickNav {
              if ($this.coreState.key.VirtualKeyCode -eq 13) {
                 $this.Unfocus()
              }
+
+             # esc
+             if ($this.coreState.key.VirtualKeyCode -eq 27 -or $this.coreState.key.VirtualKeyCode -eq 8) {
+                 if ($this.isFocused -eq $true) {
+                     $this.Unfocus()
+                 }
+             }
          }
     }
     
@@ -48,6 +55,9 @@ class CoreQuickNav {
         $this.previousPathLister = $this.coreState.pathLister
         $this.coreState.pathLister = $this.pathLister
         $this.coreState.plugins.CoreNavigation.ShowDirectoryContent($true)
+        $this.coreState.plugins.CoreNavigation.upNavigationEnabled = $false
+        
+        Log "qn Focused"
     }
     
     [void] Unfocus() {
@@ -55,6 +65,9 @@ class CoreQuickNav {
         $this.coreState.key = $null
         $this.coreState.pathLister = $this.previousPathLister
         $this.coreState.plugins.CoreNavigation.ShowDirectoryContent($true)
+        $this.coreState.plugins.CoreNavigation.upNavigationEnabled = $true
+
+        Log "qn Focused"
     }
     
     [void] AddCurrentDir() {

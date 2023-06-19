@@ -36,7 +36,7 @@
                 }
                 84 { # t
                     Log "CoreGlobalHotkeys Toggling CoreQuickNav"
-                    if ($this.coreState.focus -ne "CoreQuickNav") {
+                    if ($this.coreState.plugins.CoreQuickNav.isFocused -ne $true) {
                         $this.coreState.plugins.CoreQuickNav.Focus()
                     }
                     else {
