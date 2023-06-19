@@ -4,18 +4,19 @@ $coreState = @{
     renderQueue = @{}
     selectedPaths = @()
     needUIRefresh = $false
-    focus = "core" 
+    focus = "core"
+    quitting = $false
     pathLister = {}
 }
 
 function Start-Rookie {
     try {
-        $pluginFiles = Get-ChildItem -Path "Plugins" -Filter "*.ps1" -Recurse | Where-Object { $_.BaseName -eq $_.Directory.Name }        
+        $pluginFiles = Get-ChildItem -Path "$PSScriptRoot\Plugins" -Filter "*.ps1" -Recurse | Where-Object { $_.BaseName -eq $_.Directory.Name }        
                 
         foreach ($pluginFile in $pluginFiles) {
             Log "Loading plugin $pluginFile"
             $pluginPath = $pluginFile.FullName
-            . $pluginPath         
+            . $pluginPath
         }
 
         $coreState.renderQueue[0] = [CoreGlobalHotkeys]::new($coreState, $host)
@@ -23,6 +24,7 @@ function Start-Rookie {
         $coreState.renderQueue[200] = [CoreCommand]::new($coreState, $host)
         $coreState.renderQueue[300] = [CoreStatus]::new($coreState, $host)
         $coreState.renderQueue[400] = [CoreQuickNav]::new($coreState, $host)
+        $coreState.renderQueue[500] = [CoreItemInfo]::new($coreState, $host)
     
         $coreState.focus = "Core Navigation"
 
@@ -30,9 +32,17 @@ function Start-Rookie {
         
         $orderedPlugins = $coreState.renderQueue.GetEnumerator() | Sort-Object -Property Name | Select-Object -ExpandProperty Value
 
-        while ($true) {
+        while (-not $coreState.quitting) {            
             foreach ($plugin in $orderedPlugins) {
-                $plugin.Tick()
+                if ($plugin.Tick)
+                {
+                    $plugin.Tick()
+                }
+            }
+            
+            if ($coreState.quitting)
+            {
+                break
             }
 
             $coreState.key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -40,7 +50,12 @@ function Start-Rookie {
             if (($coreState.key.Modifiers -band [System.ConsoleModifiers]::Control) -eq [System.ConsoleModifiers]::Control) {
                 switch ($key.VirtualKeyCode) {
                     67 { # c 
-                        exit
+                        $coreState.quitting = $true
+                        Log "Quitting"
+                    }                    
+                    81 { # q
+                        $coreState.quitting = $true
+                        Log "Quitting"
                     }
                 }
             } else {
@@ -52,6 +67,17 @@ function Start-Rookie {
                 #}
             }
         }
+        
+        Log "Quitting"
+        
+        foreach ($plugin in $orderedPlugins) {
+            if ($plugin.OnQuit) {
+                $plugin.OnQuit()
+            }
+        }
+        
+        cls
+        [Console]::CursorVisible = $true
     }
     catch {
         Log $_.Exception.Message

@@ -97,6 +97,7 @@ class CoreNavigation {
 
             if ($i -eq $this.selectedIndex) {
                 Write-Host $itemName -NoNewline -BackgroundColor Yellow -ForegroundColor Black
+                $this.coreState.selectedItem = $item
             } else {
                 Write-Host $itemName -NoNewline -ForegroundColor $fg
             }
@@ -184,8 +185,6 @@ class CoreNavigation {
                         if ($char -match '^[a-zA-Z0-9_\-\.\\/]$') {
                             $this.filter += $char
                             $this.selectedIndex = 0
-
-                            Log $this.filter
                         }                        
                     }
                 }

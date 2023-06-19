@@ -10,7 +10,7 @@ class CoreCommand {
         $this.coreState.plugins["CoreCommand"] = $this
         $this.hostContext = $hostContext
 
-        $commandFiles = Get-ChildItem -Path . -Filter "_*.ps1" -Recurse
+        $commandFiles = Get-ChildItem -Path $PSScriptRoot -Filter "_*.ps1" -Recurse
 
         foreach ($commandFile in $commandFiles) {
             Log "Loading command file $commandFile"
@@ -83,15 +83,18 @@ class CoreCommand {
     [void] InvokeCommand([string] $command) {
         try
         {
+            Log "Invoking command: $command"
             $cmd = $this.commands[$command]
             if (-not $cmd) {
-                foreach ($command in $this.commands.Values) {
-                    if ($command.aliases -contains $command) {
-                        $cmd = $command
+                foreach ($commandInfo in $this.commands.Values) {
+                    if ($commandInfo.aliases -contains $command) {
+                        $cmd = $commandInfo
                         break
                     }
                 }
             }
+            
+            Log "Command: $cmd"
 
             if ($cmd)
             {
@@ -101,7 +104,7 @@ class CoreCommand {
             }
             else
             {
-                $this.coreState.plugins.CoreStatus.text = "Command not found: $($command)"
+                $this.coreState.plugins.CoreStatus.text = "Command not found: $command"
             }
         }
         catch

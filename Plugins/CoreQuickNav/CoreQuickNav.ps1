@@ -30,6 +30,8 @@ class CoreQuickNav {
         $this.coreState = $coreState
         $this.coreState.plugins["CoreQuickNav"] = $this
         $this.hostContext = $hostContext
+        
+        $this.LoadPathsFromFile()
     }
 
     [void] Tick() {
@@ -81,5 +83,27 @@ class CoreQuickNav {
                 $this.paths[$this.lastDir.Path] = 1
             }
         }
+    }
+    
+    [void] OnQuit() {
+        Log "CoreQuickNav OnQuit"
+        $this.SavePathsToFile()
+    }
+    
+    [void] SavePathsToFile() {
+        Log "CoreQuickNav SavePathsToFile"
+        $json = $this.paths | ConvertTo-Json -Depth 2
+        $json | Set-Content -Path "$PSScriptRoot\paths.json"
+    }
+    
+    [void] LoadPathsFromFile() {
+        Log "CoreQuickNav LoadPathsFromFile from $PSScriptRoot\paths.json"
+        if (-not (Test-Path "$PSScriptRoot\paths.json")) {
+            return
+        }
+
+        $json = Get-Content -Path "$PSScriptRoot\paths.json" -Raw
+        $psObject = $json | ConvertFrom-Json        
+        $psObject.PSObject.Properties | ForEach-Object { $this.paths[$_.Name] = $_.Value }
     }
 }
